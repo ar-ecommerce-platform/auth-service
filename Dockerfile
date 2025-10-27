@@ -1,7 +1,7 @@
 # -------------------------
 # 1. Build stage
 # -------------------------
-FROM eclipse-temurin:21-jdk-alpine AS build
+FROM eclipse-temurin:25-jdk-alpine AS build
 WORKDIR /app
 
 # Copy Gradle wrapper and build files first (better caching)
@@ -18,7 +18,7 @@ RUN ./gradlew build -x test --no-daemon
 # -------------------------
 # 2. Runtime stage
 # -------------------------
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
 # Install curl (for health checks and debug)
