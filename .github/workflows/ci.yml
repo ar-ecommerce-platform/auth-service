@@ -1,0 +1,20 @@
+---
+name: Auth Service CI
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    name: Lint
+    uses: ar-ecommerce-platform/.github/.github/workflows/lint.yml@main
+
+  build_and_test:
+    needs: lint
+    uses: ar-ecommerce-platform/.github/.github/workflows/ci.yml@develop
+    secrets: inherit
+    permissions:
+      contents: write
+      packages: write
