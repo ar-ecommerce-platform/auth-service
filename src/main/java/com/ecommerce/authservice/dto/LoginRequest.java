@@ -1,3 +1,3 @@
 package com.ecommerce.authservice.dto;
 
-public record LoginRequest() {}
+public record LoginRequest(String email, String password) {}
