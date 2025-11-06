@@ -12,18 +12,16 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
-        http
-                // CSRF disabled — this API is stateless and does not use sessions.
-                .csrf(AbstractHttpConfigurer::disable)
-                // Session stateless (no server-side sessions)
-                .sessionManagement(session ->
-                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // Authorize requests
-                .authorizeHttpRequests((authorize) -> authorize
-                        .anyRequest().authenticated()
-                );
-        return http.build();
-    }
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+        // CSRF disabled — this API is stateless and does not use sessions.
+        .csrf(AbstractHttpConfigurer::disable)
+        // Session stateless (no server-side sessions)
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        // Authorize requests
+        .authorizeHttpRequests((authorize) -> authorize.anyRequest().authenticated());
+    return http.build();
+  }
 }
