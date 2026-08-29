@@ -5,20 +5,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-/**
- * Provides cryptography-related beans. PasswordEncoder for securely hashing passwords using BCrypt.
- */
+/** Cryptography beans. */
 @Configuration
 public class CryptoConfig {
 
-  /**
-   * Returns a BCryptPasswordEncoder with work factor 10. Suitable for hashing and verifying user
-   * passwords.
-   *
-   * @return PasswordEncoder instance
-   */
+  /** BCrypt work factor (cost). Higher is slower and more resistant to brute force. */
+  private static final int BCRYPT_STRENGTH = 10;
+
+  /** Password hashing for registration and login verification. */
   @Bean
   public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(10);
+    return new BCryptPasswordEncoder(BCRYPT_STRENGTH);
   }
 }

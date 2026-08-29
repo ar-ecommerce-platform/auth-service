@@ -2,58 +2,66 @@ package com.ecommerce.authservice.service;
 
 import com.ecommerce.authservice.dto.LoginRequest;
 import com.ecommerce.authservice.dto.RegisterRequest;
+import com.ecommerce.authservice.dto.TokenResponse;
 import com.ecommerce.authservice.entity.User;
 import com.ecommerce.authservice.repository.UserRepository;
+import java.util.List;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-/** Handles authentication operations: register and login. */
+/** Registration and login. */
 @Service
 public class AuthService {
 
+  private static final String DEFAULT_ROLE = "USER";
+
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final JwtService jwtService;
 
-  /** Constructors for userRepository, and passwordEncoder */
-  public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+  public AuthService(
+      UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
     this.userRepository = userRepository;
     this.passwordEncoder = passwordEncoder;
-  }
-
-  /** Registers a new user with hashed password */
-  public void register(RegisterRequest registerRequest) {
-    if (userRepository.existsByEmail(registerRequest.email())) {
-      throw new IllegalArgumentException("Email already exists");
-    }
-
-    User newUser =
-        User.builder()
-            .email(registerRequest.email())
-            .password(passwordEncoder.encode(registerRequest.password()))
-            .role("USER")
-            .build();
-
-    userRepository.save(newUser);
+    this.jwtService = jwtService;
   }
 
   /**
-   * Verifies credentials for login.
+   * Registers a new user with a BCrypt-hashed password.
    *
-   * @return true if authentication succeeds
+   * @throws IllegalArgumentException if the email is already registered
    */
-  public boolean login(LoginRequest loginRequest) {
-    var user =
-        userRepository
-            .findByEmail(loginRequest.email())
-            .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
+  @Transactional
+  public void register(RegisterRequest request) {
+    if (userRepository.existsByEmail(request.email())) {
+      throw new IllegalArgumentException("Email already registered");
+    }
+    User user =
+        User.builder()
+            .email(request.email())
+            .password(passwordEncoder.encode(request.password()))
+            .role(DEFAULT_ROLE)
+            .build();
+    userRepository.save(user);
+  }
 
-    boolean matches = passwordEncoder.matches(loginRequest.password(), user.getPassword());
-    if (!matches) {
+  /**
+   * Verifies credentials and returns a signed token.
+   *
+   * @throws BadCredentialsException if the email is unknown or the password does not match
+   */
+  @Transactional(readOnly = true)
+  public TokenResponse login(LoginRequest request) {
+    User user =
+        userRepository
+            .findByEmail(request.email())
+            .orElseThrow(() -> new BadCredentialsException("Invalid credentials"));
+    if (!passwordEncoder.matches(request.password(), user.getPassword())) {
       throw new BadCredentialsException("Invalid credentials");
     }
-
-    return true;
+    String token = jwtService.generateToken(user.getEmail(), List.of(user.getRole()));
+    return TokenResponse.bearer(token, jwtService.getExpirationMs());
   }
 }
