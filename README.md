@@ -5,7 +5,7 @@ registration, login, and JWT issuance/validation.
 
 - **Port:** 8081
 - **Tokens:** HS256 JWT with `iss` + `roles` claims, shared secret with the gateway
-- **Persistence:** in-memory H2 (`users` table) — resets on restart
+- **Persistence:** `users` table. Dev: in-memory H2 (resets on restart). `prod`: PostgreSQL + Flyway.
 - **Registers with:** Eureka (discovery-server :8761)
 
 ## Endpoints
@@ -67,8 +67,10 @@ End-to-end auth (register → login → bearer) is covered through the gateway i
 | `JWT_EXPIRATION_MS` | `3600000` | token lifetime |
 | `JWT_ISSUER` | `ecommerce-auth` | `iss` claim |
 | `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` | `http://localhost:8761/eureka/` | registry URL |
+| `SPRING_PROFILES_ACTIVE` | _(none)_ | set to `prod` to use PostgreSQL + Flyway instead of H2 |
+| `SPRING_DATASOURCE_URL` / `_USERNAME` / `_PASSWORD` | - | Postgres connection (`prod` only) |
 
 ## Tech
 
-Java 21 · Spring Boot 3.5.7 · Spring Security · jjwt 0.13 · Spring Data JPA + H2 ·
+Java 21 · Spring Boot 3.5.7 · Spring Security · jjwt 0.13 · Spring Data JPA (H2 / PostgreSQL + Flyway) ·
 Spring Cloud 2025.0.0 (`netflix-eureka-client`) · Gradle
