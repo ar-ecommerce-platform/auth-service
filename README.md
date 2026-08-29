@@ -47,6 +47,17 @@ docker build -t ecom/auth-service . && docker run --rm -p 8081:8081 ecom/auth-se
 
 Quality config is vendored: `gradle/quality.gradle`, `config/checkstyle/`.
 
+## Testing
+
+`./gradlew test` runs every layer below; `./gradlew build` also runs Checkstyle + Spotless and writes a JaCoCo report to `build/reports/jacoco/`.
+
+- **Smoke** — `AuthServiceApplicationTests`: the full Spring context starts.
+- **Unit** — `service/AuthServiceTest` (JUnit 5 + Mockito + AssertJ): duplicate-email registration is rejected; login returns a Bearer token; a wrong password throws `BadCredentialsException`.
+- **API / web slice** — `controller/AuthControllerTest` (`@WebMvcTest` + MockMvc, service mocked): `POST /auth/register` → 201 / 409; `POST /auth/login` → token JSON; bad credentials → 401 with the `ApiError` body; `GET /auth/validate` echoes the token subject.
+- **Repository slice** — `repository/UserRepositoryTest` (`@DataJpaTest`): `findByEmail` / `existsByEmail` against an embedded database.
+
+End-to-end auth (register → login → bearer) is covered through the gateway in [e2e-tests](https://github.com/ar-ecommerce-platform/e2e-tests).
+
 ## Config
 
 | Variable | Default | Purpose |
