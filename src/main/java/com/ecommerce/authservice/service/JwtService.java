@@ -1,61 +1,77 @@
 package com.ecommerce.authservice.service;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.MacAlgorithm;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
+import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-
-/** Handles creating and checking JWT tokens. Uses a secret key and token expiration from config. */
+/**
+ * Issues and verifies HS256 JSON Web Tokens.
+ *
+ * <p>The gateway validates these tokens with the same shared secret and expected issuer. Upgrading
+ * to RS256 + a JWKS endpoint is a planned follow-up (see infra/RUNBOOK.md).
+ */
 @Service
 public class JwtService {
 
-  private final SecretKey jwtSigningKey;
+  /** Pinned so the algorithm never varies with secret length. */
+  private static final MacAlgorithm ALGORITHM = Jwts.SIG.HS256;
+
+  private final SecretKey signingKey;
   private final long expirationMs;
+  private final String issuer;
 
   /**
-   * Initialize JwtService with secret key and expiration time.
+   * Builds the service from configured signing material.
    *
-   * @param jwtSecret The jwt secret key for signing tokens
-   * @param expirationMs How long the token is valid (ms)
+   * @param secret shared HS256 secret (must be at least 32 bytes)
+   * @param expirationMs token lifetime in milliseconds
+   * @param issuer value placed in, and required on, the {@code iss} claim
    */
   public JwtService(
-      @Value("${spring.security.jwt.secret}") String jwtSecret,
-      @Value("${spring.security.jwt.expiration-ms}") long expirationMs) {
-    this.jwtSigningKey = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+      @Value("${security.jwt.secret}") String secret,
+      @Value("${security.jwt.expiration-ms}") long expirationMs,
+      @Value("${security.jwt.issuer}") String issuer) {
+    this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     this.expirationMs = expirationMs;
+    this.issuer = issuer;
   }
 
-  /**
-   * Make a new JWT Token for a user email
-   *
-   * @param email The user's email
-   * @return The signed JWT token
-   */
-  public String generateToken(String email) {
-
+  /** Creates a signed token for the given subject and roles. */
+  public String generateToken(String subject, List<String> roles) {
+    Date now = new Date();
     return Jwts.builder()
-        .subject(email)
-        .issuedAt(new Date())
-        .expiration(new Date(System.currentTimeMillis() + expirationMs))
-        .signWith(jwtSigningKey)
+        .issuer(issuer)
+        .subject(subject)
+        .claim("roles", roles)
+        .issuedAt(now)
+        .expiration(new Date(now.getTime() + expirationMs))
+        .signWith(signingKey, ALGORITHM)
         .compact();
   }
 
   /**
-   *  Get the email from a JWT Token
+   * Verifies the signature, issuer and expiry, returning the token claims.
    *
-   * @param token The JWT Token
-   * @return The email stored in the token
-   * */
-    public String extractEmail(String token) {
-        return Jwts.parser()
-                .verifyWith(jwtSigningKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload()
-                .getSubject();
-    }
+   * @throws JwtException if the token is invalid or expired
+   */
+  public Claims parse(String token) {
+    return Jwts.parser()
+        .verifyWith(signingKey)
+        .requireIssuer(issuer)
+        .build()
+        .parseSignedClaims(token)
+        .getPayload();
+  }
+
+  public long getExpirationMs() {
+    return expirationMs;
+  }
 }
