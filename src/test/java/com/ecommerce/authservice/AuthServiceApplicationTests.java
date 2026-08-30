@@ -1,4 +1,4 @@
-package com.ecommerce.auth_service;
+package com.ecommerce.authservice;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -7,5 +7,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class AuthServiceApplicationTests {
 
   @Test
-  void contextLoads() {}
+  void contextLoads() {
+    // Passes if the application context starts.
+  }
 }
