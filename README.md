@@ -63,7 +63,7 @@ End-to-end auth (register → login → bearer) is covered through the gateway i
 | Variable | Default | Purpose |
 |---|---|---|
 | `SERVER_PORT` | `8081` | HTTP port |
-| `JWT_SECRET` | dev fallback (>= 32 bytes) | HS256 signing secret — inject the real value from the environment |
+| `JWT_SECRET` | **required** (>= 32 bytes) | HS256 signing secret — inject the real value from the environment |
 | `JWT_EXPIRATION_MS` | `3600000` | token lifetime |
 | `JWT_ISSUER` | `ecommerce-auth` | `iss` claim |
 | `EUREKA_CLIENT_SERVICEURL_DEFAULTZONE` | `http://localhost:8761/eureka/` | registry URL |

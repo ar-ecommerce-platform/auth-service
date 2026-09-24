@@ -28,7 +28,7 @@ security:
   jwt:
     # Dev-only fallback. Real value is injected from the environment (see infra/compose/.env).
     # HS256 needs >= 32 bytes.
-    secret: ${JWT_SECRET:dev-only-not-a-real-secret-change-me-0000000000000000}
+    secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
     issuer: ${JWT_ISSUER:ecommerce-auth}
 
